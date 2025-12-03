@@ -446,27 +446,24 @@ class AplikasiKantin(ctk.CTk):
         if not self.is_admin:
             return
         self.clear_main()
-        frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD, corner_radius=12)
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
-        header = ctk.CTkLabel(frame, text="Riwayat Pesanan", font=("Arial", 18, "bold"))
-        header.pack(anchor="w", padx=20, pady=10)
+        self.current_page = self.show_riwayat
+        pal = THEMES[self.theme]
 
-        cols = ("waktu", "pembeli", "items", "total", "status")
+        frame = ctk.CTkFrame(self.main_area, fg_color=pal["card"])
+        frame.pack(fill="both", expand=True)
+        ctk.CTkLabel(frame, text="Riwayat Pesanan", font=("Arial", 18, "bold"), text_color=pal["text"]).pack(anchor="w", padx=20, pady=10)
+        cols = ("waktu", "pembeli", "items", "total")
         tree = ttk.Treeview(frame, columns=cols, show="headings")
-
         for c in cols:
             tree.heading(c, text=c.upper())
         tree.pack(fill="both", expand=True, padx=20, pady=10)
+        for o in self.manager.get_orders_history():
+            items = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
+            tree.insert("", "end", values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"), o.buyer_name, items, f"Rp {o.total:,}".replace(",", ".")))
 
-        def refresh():
-            for i in tree.get_children(): tree.delete(i)
-            for o in self.manager.get_orders_history():
-                items_text = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
-                tree.insert("", "end", values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"), o.buyer_name, items_text, f"Rp {o.total:,}".replace(",", "."), o.status))
-        refresh()
-        self.frame_riwayat = frame
-
-    # ---------------- Laporan Page ----------------
+    # --------------------------
+    # Laporan
+    # --------------------------
     def show_laporan(self):
         if not self.is_admin:
             return
