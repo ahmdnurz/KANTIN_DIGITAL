@@ -9,9 +9,10 @@ from datetime import datetime
 # initial appearance
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
-
+#KONTANTA (nilai tetap yang tidak berubah selama program berjalan)(14-36)
 # palettes for dark and light
 PALETTE = {
+    #TIPE DATA STING Tipe data menentukan jenis nilai yang disimpan dalam variabel(16-37)
     "Dark": {
         "BG_MAIN": "#0F172A",
         "SIDEBAR": "#1E293B",
@@ -35,11 +36,13 @@ PALETTE = {
         "SUBTEXT": "#374151"
     }
 }
-
+#VARIABEL WARNA UNTUK MODE GELAP DAN TERANG(Variabel adalah tempat menyimpan nilai yang bisa berubah)(39-40)
+#FUNGSI Fungsi adalah blok kode yang memiliki nama, dipanggil berkali-kali, dan membuat kode lebih rapi.(41-43)
 def colors_for_mode(mode: str):
     return PALETTE.get(mode, PALETTE["Dark"])
 
 # --------------- Login Window ---------------
+#GUI CustomTkinter , Tkinter adalah tampilan visual yang berinteraksi dengan pengguna melalui tombol, input, label, dll.
 class LoginWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -47,6 +50,7 @@ class LoginWindow(ctk.CTk):
         self.geometry("900x600")
         self.minsize(850, 550)
         self.resizable(True, True)
+#VARIABEL MANAGER UNTUK MENGELOLA DATA KANTIN(51)
         self.manager = KantinManager()
 
         self._apply_palette()
@@ -89,7 +93,7 @@ class LoginWindow(ctk.CTk):
         ctk.CTkLabel(box, text="LOGIN ADMIN",
                      font=("Arial", 20, "bold"),
                      text_color=self.COLORS["TEXT"]).pack(pady=(0, 20))
-
+#VARIABEL ENTRY UNTUK USERNAME DAN PASSWORD(94-101)
         self.entry_user = ctk.CTkEntry(box, placeholder_text="Username",
                                        width=260, height=40)
         self.entry_user.pack(pady=10)
@@ -125,7 +129,9 @@ class LoginWindow(ctk.CTk):
         except Exception:
             pass
 
-    # =================== LOGIN FUNCTION ===================    
+    # =================== LOGIN FUNCTION ===================  
+    # PERCABANGAN IF ELSE Percabangan adalah proses memilih jalur keputusan berdasarkan kondisi (132-137)
+#FUNGSI PROSES LOGIN(134-143)
     def aksi_login(self):
         if self.manager.cek_login(self.entry_user.get(), self.entry_pass.get()):
             self.destroy()
@@ -147,6 +153,7 @@ class AplikasiKantin(ctk.CTk):
         self.geometry("1200x750")
 
         self.manager = KantinManager()
+#ARRAY KERANJANG UNTUK MENYIMPAN ITEM YANG DIPESAN(154-155)
         self.keranjang = []  # list of dict {menu:MenuItem, qty:int}
         self.buyer_name = ""
 
@@ -167,6 +174,8 @@ class AplikasiKantin(ctk.CTk):
         self.btn_order.pack(pady=6)
 
         # If admin show admin pages, guest will see category buttons below
+#VARIABEL BUTTON UNTUK ADMIN DAN TAMU(172-186)
+#PERCABANGAN IF ELSE Percabangan adalah proses memilih jalur keputusan berdasarkan kondisi (175-189)
         if self.is_admin:
             self.btn_kelola = ctk.CTkButton(self.sidebar, text="Kelola Menu", command=self.show_kelola, width=200, fg_color="transparent", anchor="w")
             self.btn_kelola.pack(pady=6)
@@ -264,6 +273,7 @@ class AplikasiKantin(ctk.CTk):
             widget.destroy()
 
     # ---------------- Pemesanan Page ----------------
+    #GUI PEMESANAN UNTUK MENAMPILKAN MENU DAN KERANJANG(277-307)
     def show_pemesanan(self, filter_kategori="Semua"):
         from customtkinter import CTkScrollableFrame
 
@@ -304,6 +314,7 @@ class AplikasiKantin(ctk.CTk):
         def refresh_cartbox():
             listbox.delete(0, "end")
             total = 0
+#PERULANGAN FOR Perulangan adalah proses pengulangan eksekusi kode tertentu berdasarkan kondisi yang ditentukan (313-319
             for entry in self.keranjang:
                 nama = entry["menu"].nama
                 harga = entry["menu"].harga
