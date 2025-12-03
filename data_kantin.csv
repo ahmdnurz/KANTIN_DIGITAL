@@ -1,13 +1,10 @@
 Nama,Harga,Kategori,Stok
-<<<<<<< HEAD
-Nasi goreng,16000,Makanan,17
-Gado-Gado,13000,Makanan,17
+Nasi goreng,16000,Makanan,16
+Gado-Gado,13000,Makanan,16
 Lalapan,24000,Makanan,24
 jus mangga,6000,Minuman,20
 jus obok-obok,6000,Minuman,23
 Pilus,1000,Snack,20
-pillow,500,Snack,50
-=======
 Nasi goreng,16000,Makanan,19
 Gado-Gado,13000,Makanan,20
 Lalapan,24000,Makanan,25
@@ -16,4 +13,4 @@ jus obok-obok,6000,Minuman,19
 Pilus,1000,Snack,19
 pillow,500,Snack,49
 ahmad,1000,Makanan,0
->>>>>>> c7e0a62c48329089225569e0fdc85b6b608a78e5
+Nasi kuning,15000,Makanan,11
