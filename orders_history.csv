@@ -10,20 +10,7 @@ Timestamp,Buyer,Subtotal,Pajak,Total,Status,Items
 2025-12-03 08:22:14,res,1000,100,1100,Selesai,Pilus|1|1000
 2025-12-03 09:21:12,nk,37000,3700,40700,Selesai,Gado-Gado|1|13000;Lalapan|1|24000
 2025-12-03 09:22:26,",",16000,1600,17600,Selesai,Nasi goreng|1|16000
-<<<<<<< HEAD
-2025-12-03 10:21:54,zara,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-2025-12-03 10:46:13,zar5,53000,5300,58300,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000;Lalapan|1|24000
-2025-12-03 10:54:28,zar6,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-=======
 2025-12-03 10:50:22,ahmed,30500,3050,33550,Selesai,Nasi goreng|1|16000;jus obok-obok|1|6000;jus mangga|1|6000;Pilus|1|1000;ahmad|1|1000;pillow|1|500
 >>>>>>> c7e0a62c48329089225569e0fdc85b6b608a78e5
 2025-12-03 12:09:43,zara,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
 2025-12-03 12:10:35,tezs,15000,1500,16500,Selesai,Nasi kuning|1|15000
-2025-12-03 19:54:58,Meja 2 - zara,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-2025-12-03 20:01:57,Meja 3 - za,64000,6400,70400,Selesai,Nasi goreng|4|16000
-2025-12-03 20:13:17,Meja 4 - struck,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-2025-12-03 20:18:37,Meja 5 - zar,37000,3700,40700,Selesai,Gado-Gado|1|13000;Lalapan|1|24000
-2025-12-03 20:30:25,struck,1,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-2025-12-03 20:55:15,darkmode,3,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
-2025-12-03 21:22:07,final,10,40000,4000,44000,Selesai,Nasi goreng|1|16000;Lalapan|1|24000
-2025-12-03 21:36:51,ZARA,14,22000,2200,24200,Selesai,Nasi goreng|1|16000;jus mangga|1|6000
