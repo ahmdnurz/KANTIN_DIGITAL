@@ -10,6 +10,10 @@ Timestamp,Buyer,Subtotal,Pajak,Total,Status,Items
 2025-12-03 08:22:14,res,1000,100,1100,Selesai,Pilus|1|1000
 2025-12-03 09:21:12,nk,37000,3700,40700,Selesai,Gado-Gado|1|13000;Lalapan|1|24000
 2025-12-03 09:22:26,",",16000,1600,17600,Selesai,Nasi goreng|1|16000
+<<<<<<< HEAD
 2025-12-03 10:21:54,zara,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
 2025-12-03 10:46:13,zar5,53000,5300,58300,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000;Lalapan|1|24000
 2025-12-03 10:54:28,zar6,29000,2900,31900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000
+=======
+2025-12-03 10:50:22,ahmed,30500,3050,33550,Selesai,Nasi goreng|1|16000;jus obok-obok|1|6000;jus mangga|1|6000;Pilus|1|1000;ahmad|1|1000;pillow|1|500
+>>>>>>> c7e0a62c48329089225569e0fdc85b6b608a78e5
