@@ -470,24 +470,88 @@ class AplikasiKantin(ctk.CTk):
         if not self.is_admin:
             return
         self.clear_main()
+
         frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD, corner_radius=12)
         frame.pack(fill="both", expand=True, padx=10, pady=10)
+
         header = ctk.CTkLabel(frame, text="Riwayat Pesanan", font=("Arial", 18, "bold"))
         header.pack(anchor="w", padx=20, pady=10)
 
+        # ==============================
+        # TABLE RIWAYAT
+        # ==============================
         cols = ("waktu", "pembeli", "items", "total", "status")
         tree = ttk.Treeview(frame, columns=cols, show="headings")
+
         for c in cols:
             tree.heading(c, text=c.upper())
-        tree.pack(fill="both", expand=True, padx=20, pady=10)
+
+        tree.pack(fill="both", expand=True, padx=20, pady=(0, 10))
 
         def refresh():
-            for i in tree.get_children(): tree.delete(i)
+            for i in tree.get_children():
+                tree.delete(i)
+
             for o in self.manager.get_orders_history():
                 items_text = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
-                tree.insert("", "end", values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"), o.buyer_name, items_text, f"Rp {o.total:,}".replace(",", "."), o.status))
+                tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        o.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                        o.buyer_name,
+                        items_text,
+                        f"Rp {o.total:,}".replace(",", "."),
+                        o.status
+                    )
+                )
+
         refresh()
+
+        # ==============================
+        # TOMBOL HAPUS RIWAYAT TERPILIH
+        # ==============================
+        def hapus_riwayat():
+            from tkinter import messagebox
+
+            # Ambil item terpilih
+            selected = tree.focus()
+            if not selected:
+                messagebox.showwarning("Peringatan", "Pilih salah satu riwayat yang ingin dihapus!")
+                return
+
+            values = tree.item(selected, "values")
+            waktu = values[0]
+
+            confirm = messagebox.askyesno(
+                "Konfirmasi",
+                f"Yakin ingin menghapus riwayat pada waktu:\n{waktu}?"
+            )
+            if not confirm:
+                return
+
+            history = self.manager.orders_history
+
+            for o in history[:]:
+                if o.timestamp.strftime("%Y-%m-%d %H:%M:%S") == waktu:
+                    history.remove(o)
+                    break
+
+            refresh()
+
+        # === TOMBOL DITAMBAHKAN DI SINI ===
+        btn_hapus = ctk.CTkButton(
+            frame,
+            text="Hapus Riwayat Terpilih",
+            fg_color="red",
+            hover_color="#A00000",
+            text_color="white",
+            command=hapus_riwayat
+        )
+        btn_hapus.pack(anchor="e", padx=20, pady=10)
+
         self.frame_riwayat = frame
+
 
     # ---------------- Laporan Page ----------------
     def show_laporan(self):

@@ -1,0 +1,7 @@
+Timestamp,Buyer,Subtotal,Pajak,Total,Status,Items
+2025-12-02 17:25:41,Malik,59000,5900,64900,Selesai,Nasi goreng|1|16000;Gado-Gado|1|13000;Lalapan|1|24000;jus mangga|1|6000
+2025-12-02 17:52:34,ahmed,64000,6400,70400,Selesai,Nasi goreng|4|16000
+2025-12-02 17:52:41,taik,39000,3900,42900,Selesai,Gado-Gado|3|13000
+2025-12-02 17:52:49,leis,36000,3600,39600,Selesai,jus mangga|6|6000
+2025-12-02 17:53:42,q,37000,3700,40700,Selesai,jus mangga|1|6000;Lalapan|1|24000;jus obok-obok|1|6000;Pilus|1|1000
+2025-12-02 17:53:52,ahhh,2000,200,2200,Selesai,pillow|2|500;ahmad|1|1000
