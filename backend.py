@@ -1,4 +1,3 @@
-# backend.py
 import csv
 import os
 from datetime import datetime
@@ -81,12 +80,16 @@ class OrderItem:
 
 class Order:
     TAX_RATE = 0.10
+    counter_meja = 1  # counter untuk nomor meja otomatis
 
     def __init__(self, buyer_name: str, items: List[OrderItem]):
         self.buyer_name = buyer_name
         self.items = items  # list of OrderItem
         self.timestamp = datetime.now()
-        self.status = "Selesai" 
+        self.status = "Selesai"
+        # assign nomor meja otomatis
+        self.meja = Order.counter_meja
+        Order.counter_meja += 1
 
     @property
     def subtotal(self):
@@ -94,16 +97,26 @@ class Order:
 
     @property
     def pajak(self):
-        return int(self.subtotal * Order.TAX_RATE)
+        # pembulatan normal
+        return int(round(self.subtotal * Order.TAX_RATE))
 
     @property
     def total(self):
         return self.subtotal + self.pajak
 
     def to_row(self):
-        # store as: timestamp, buyer, total, pajak, status, items_serialized
+        # store as: timestamp, buyer, meja, subtotal, pajak, total, status, items_serialized
         items_ser = ";".join([f"{i.menu_item.nama}|{i.qty}|{i.menu_item.harga}" for i in self.items])
-        return [self.timestamp.strftime("%Y-%m-%d %H:%M:%S"), self.buyer_name, str(self.subtotal), str(self.pajak), str(self.total), self.status, items_ser]
+        return [
+            self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            self.buyer_name,
+            str(self.meja),
+            str(self.subtotal),
+            str(self.pajak),
+            str(self.total),
+            self.status,
+            items_ser
+        ]
 
 # -------------------------
 # KantinManager
@@ -140,9 +153,12 @@ class KantinManager:
         self.daftar_menu = []
         self.tambah_menu("Nasi Goreng Spesial", 18000, "Makanan", 10)
         self.tambah_menu("Ayam Geprek", 15000, "Makanan", 15)
+        self.tambah_menu("Gado-Gado", 13000, "Makanan", 16)
+        self.tambah_menu("Lalapan", 24000, "Makanan", 24)
         self.tambah_menu("Es Teh Manis", 4000, "Minuman", 30)
-        self.tambah_menu("Kopi Susu Gula Aren", 12000, "Minuman", 20)
+        self.tambah_menu("Jus Mangga", 6000, "Minuman", 20)
         self.tambah_menu("Kentang Goreng", 8000, "Snack", 12)
+        self.tambah_menu("Pilus", 1000, "Snack", 20)
         self.export_ke_csv()
 
     def tambah_menu(self, nama: str, harga: int, kategori: str, stok: int = 0):
@@ -170,6 +186,12 @@ class KantinManager:
     def get_semua_menu(self) -> List[MenuItem]:
         return self.daftar_menu
 
+    # helper: ambil menu by kategori (lebih eksplisit)
+    def get_menu_by_kategori(self, kategori: str) -> List[MenuItem]:
+        if kategori.lower() == "semua":
+            return self.get_semua_menu()
+        return self.filter_kategori(kategori)
+
     # --------------- export/import ---------------
     def export_ke_csv(self, filename: str = FILE_DB) -> bool:
         try:
@@ -185,7 +207,7 @@ class KantinManager:
 
     # --------------- login sederhana ---------------
     def cek_login(self, username: str, password: str) -> bool:
-        # placeholder simple auth
+        # default admin credentials (keamanan: placeholder)
         return username == "admin" and password == "123"
 
     # --------------- orders & history ---------------
@@ -197,10 +219,9 @@ class KantinManager:
                     reader = csv.reader(f)
                     next(reader, None)
                     for row in reader:
-                        # row: timestamp, buyer, subtotal, pajak, total, status, items_ser
-                        if len(row) >= 7:
-                            # reconstruct Order object (basic)
-                            timestamp_s, buyer, subtotal_s, pajak_s, total_s, status, items_ser = row[:7]
+                        # new row format: timestamp, buyer, meja, subtotal, pajak, total, status, items_ser
+                        if len(row) >= 8:
+                            timestamp_s, buyer, meja_s, subtotal_s, pajak_s, total_s, status, items_ser = row[:8]
                             # parse items
                             items = []
                             for it in items_ser.split(";"):
@@ -211,10 +232,31 @@ class KantinManager:
                                     menu_ref = next((x for x in self.daftar_menu if x.nama == nama), None)
                                     if menu_ref:
                                         items.append(OrderItem(menu_ref, int(qty_s)))
+                                    else:
+                                        # buat MenuItem sementara agar riwayat tetap utuh
+                                        try:
+                                            temp = MenuItem(nama, int(harga_s), "Unknown", 0)
+                                            items.append(OrderItem(temp, int(qty_s)))
+                                        except Exception:
+                                            continue
                             if items:
                                 ord_obj = Order(buyer, items)
-                                ord_obj.timestamp = datetime.strptime(timestamp_s, "%Y-%m-%d %H:%M:%S")
+                                # override meja & timestamp & status based on file
+                                try:
+                                    ord_obj.timestamp = datetime.strptime(timestamp_s, "%Y-%m-%d %H:%M:%S")
+                                except Exception:
+                                    pass
+                                try:
+                                    ord_obj.meja = int(meja_s)
+                                except Exception:
+                                    pass
                                 ord_obj.status = status
+                                # ensure counter_meja is ahead to avoid duplikat meja
+                                try:
+                                    if isinstance(ord_obj.meja, int) and ord_obj.meja >= Order.counter_meja:
+                                        Order.counter_meja = ord_obj.meja + 1
+                                except Exception:
+                                    pass
                                 self.orders_history.append(ord_obj)
             except Exception:
                 pass
@@ -230,11 +272,26 @@ class KantinManager:
             it.menu_item.reduce_stok(it.qty)
 
         # simpan order ke history list dan file CSV
-        self.orders_history.append(order)
-        self._append_order_to_csv(order)
-        # update master menu csv
-        self.export_ke_csv()
-        return True
+        try:
+            self.orders_history.append(order)
+            self._append_order_to_csv(order)
+            # update master menu csv
+            self.export_ke_csv()
+            return True
+        except Exception as e:
+            # rollback stok & history
+            for it in order.items:
+                try:
+                    it.menu_item.increase_stok(it.qty)
+                except Exception:
+                    pass
+            if order in self.orders_history:
+                try:
+                    self.orders_history.remove(order)
+                except Exception:
+                    pass
+            print("Gagal menyimpan order:", e)
+            return False
 
     def _append_order_to_csv(self, order: Order):
         header_needed = not os.path.exists(FILE_ORDERS)
@@ -242,7 +299,7 @@ class KantinManager:
             with open(FILE_ORDERS, mode='a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 if header_needed:
-                    writer.writerow(["Timestamp", "Buyer", "Subtotal", "Pajak", "Total", "Status", "Items"])
+                    writer.writerow(["Timestamp", "Buyer", "Meja", "Subtotal", "Pajak", "Total", "Status", "Items"])
                 writer.writerow(order.to_row())
         except Exception as e:
             print("Order save error:", e)

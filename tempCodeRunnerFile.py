@@ -1,26 +1,45 @@
-# main.py
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 import customtkinter as ctk
-from backend import KantinManager, Order, OrderItem, Cart
+from backend import KantinManager, Order, OrderItem
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import datetime
 
+# initial appearance
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
 
-# Colors
-COLOR_BG_MAIN = "#0F172A"
-COLOR_SIDEBAR = "#1E293B"
-COLOR_CARD = "#334155"
-COLOR_PRIMARY = "#3B82F6"
-COLOR_SUCCESS = "#10B981"
-COLOR_WARNING = "#F59E0B"
-COLOR_DANGER = "#EF4444"
+# palettes for dark and light
+PALETTE = {
+    "Dark": {
+        "BG_MAIN": "#0F172A",
+        "SIDEBAR": "#1E293B",
+        "CARD": "#334155",
+        "PRIMARY": "#3B82F6",
+        "SUCCESS": "#10B981",
+        "WARNING": "#F59E0B",
+        "DANGER": "#EF4444",
+        "TEXT": "white",
+        "SUBTEXT": "gray"
+    },
+    "Light": {
+        "BG_MAIN": "#FFFFFF",
+        "SIDEBAR": "#F1F5F9",
+        "CARD": "#F8FAFC",
+        "PRIMARY": "#2563EB",
+        "SUCCESS": "#059669",
+        "WARNING": "#D97706",
+        "DANGER": "#DC2626",
+        "TEXT": "#0B1220",
+        "SUBTEXT": "#374151"
+    }
+}
 
-# ====================================================
-# LOGIN PAGE
-# ====================================================
+def colors_for_mode(mode: str):
+    return PALETTE.get(mode, PALETTE["Dark"])
+
+# --------------- Login Window ---------------
 class LoginWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -30,42 +49,95 @@ class LoginWindow(ctk.CTk):
         self.resizable(True, True)
         self.manager = KantinManager()
 
-        frame = ctk.CTkFrame(self, fg_color=COLOR_CARD)
-        frame.pack(expand=True, padx=40, pady=40)
+        self._apply_palette()
 
-        ctk.CTkLabel(frame, text="Login Admin Kantin", font=("Arial", 22, "bold")).pack(pady=10)
+        # ================= GRID UTAMA (PENTING) =================
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=2)
+        self.grid_rowconfigure(0, weight=1)
 
-        self.entry_user = ctk.CTkEntry(frame, placeholder_text="Username", width=280)
-        self.entry_user.pack(pady=6)
+        # =========== LEFT Branding Panel ===========
+        left = ctk.CTkFrame(self, fg_color=self.COLORS["PRIMARY"], corner_radius=0)
+        left.grid(row=0, column=0, sticky="nsew")
 
-        self.entry_pass = ctk.CTkEntry(frame, placeholder_text="Password", width=280, show="*")
-        self.entry_pass.pack(pady=6)
+        ctk.CTkLabel(left, text="KANTIN\nDIGITAL",
+                     font=("Montserrat", 32, "bold"),
+                     justify="center",
+                     text_color=self.COLORS["TEXT"]).pack(pady=(120, 20))
 
-        ctk.CTkButton(frame, text="Login", fg_color=COLOR_PRIMARY, width=200,
-                      command=self.try_login).pack(pady=10)
+        ctk.CTkLabel(left, text="Sistem Manajemen\nMenu & Order",
+                     font=("Roboto", 14),
+                     text_color=self.COLORS["TEXT"]).pack()
 
-        ctk.CTkButton(frame, text="Masuk Tanpa Login", fg_color=COLOR_SUCCESS, width=200,
-                      command=self.guest_mode).pack(pady=5)
+        ctk.CTkLabel(left,
+                     text="Created by Kelompok 3 & 4\nTeknik Komputer 2025",
+                     font=("Arial", 10),
+                     text_color=self.COLORS["TEXT"]).pack(side="bottom", pady=30)
 
-    def try_login(self):
-        user = self.entry_user.get()
-        pwd = self.entry_pass.get()
-        if self.manager.cek_login(user, pwd):
+        # =========== RIGHT Form Panel ===========
+        right = ctk.CTkFrame(self, fg_color=self.COLORS["BG_MAIN"], corner_radius=0)
+        right.grid(row=0, column=1, sticky="nsew")
+
+        # membuat form berada di tengah vertikal & horizontal
+        right.grid_columnconfigure(0, weight=1)
+        right.grid_rowconfigure(0, weight=1)
+
+        box = ctk.CTkFrame(right, fg_color="transparent")
+        box.grid(row=0, column=0)
+
+        # ========== Isi Kotak Login ==========
+        ctk.CTkLabel(box, text="LOGIN ADMIN",
+                     font=("Arial", 20, "bold"),
+                     text_color=self.COLORS["TEXT"]).pack(pady=(0, 20))
+
+        self.entry_user = ctk.CTkEntry(box, placeholder_text="Username",
+                                       width=260, height=40)
+        self.entry_user.pack(pady=10)
+
+        self.entry_pass = ctk.CTkEntry(box, placeholder_text="Password",
+                                       show="•", width=260, height=40)
+        self.entry_pass.pack(pady=10)
+
+        ctk.CTkButton(box, text="LOGIN",
+                      command=self.aksi_login,
+                      width=260, height=40,
+                      fg_color=self.COLORS["PRIMARY"]).pack(pady=20)
+
+        ctk.CTkButton(box, text="Lihat Menu Saja (Tamu)",
+                      command=self.masuk_tamu,
+                      width=260,
+                      fg_color="transparent",
+                      border_width=1,
+                      text_color=self.COLORS["TEXT"]).pack(pady=5)
+
+        ctk.CTkLabel(box, text="Silahkan login",
+                     text_color=self.COLORS["SUBTEXT"]).pack()
+
+        # Enter untuk login
+        self.bind('<Return>', lambda e: self.aksi_login())
+
+    def _apply_palette(self):
+        mode = ctk.get_appearance_mode() or "Dark"
+        self.COLORS = colors_for_mode(mode)
+        # set window bg accordingly
+        try:
+            self.configure(fg_color=self.COLORS["BG_MAIN"])
+        except Exception:
+            pass
+
+    # =================== LOGIN FUNCTION ===================    
+    def aksi_login(self):
+        if self.manager.cek_login(self.entry_user.get(), self.entry_pass.get()):
             self.destroy()
-            app = AplikasiKantin(is_admin=True)
-            app.mainloop()
+            buka_aplikasi_utama(is_admin=True)
         else:
-            messagebox.showerror("Gagal", "Username atau password salah!")
+            messagebox.showerror("Akses Ditolak", "Username atau Password salah!")
 
-    def guest_mode(self):
+    def masuk_tamu(self):
         self.destroy()
-        app = AplikasiKantin(is_admin=False)
-        app.mainloop()
+        buka_aplikasi_utama(is_admin=False)
 
-
-# ====================================================
-# MAIN APPLICATION
-# ====================================================
+# --------------- Main App ---------------
 class AplikasiKantin(ctk.CTk):
     def __init__(self, is_admin=True):
         super().__init__()
@@ -73,388 +145,549 @@ class AplikasiKantin(ctk.CTk):
         role = "Administrator" if is_admin else "Mode Tamu"
         self.title(f"Dashboard {role} - Kantin Digital")
         self.geometry("1200x750")
-        self.configure(fg_color=COLOR_BG_MAIN)
 
         self.manager = KantinManager()
-
-        # === Fitur Baru dari backend ===
-        self.cart = Cart()
+        self.keranjang = []  # list of dict {menu:MenuItem, qty:int}
         self.buyer_name = ""
 
-        # Layout grid
+        # initial palette & UI
+        self._apply_palette_initial()
+
+        # grid
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # ====================================================
-        # SIDEBAR
-        # ====================================================
-        self.sidebar = ctk.CTkFrame(self, width=220, fg_color=COLOR_SIDEBAR, corner_radius=0)
+        # sidebar
+        self.sidebar = ctk.CTkFrame(self, width=220, fg_color=self.COLORS["SIDEBAR"], corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nswe")
+        ctk.CTkLabel(self.sidebar, text="KANTIN", font=("Montserrat", 22, "bold"), text_color=self.COLORS["PRIMARY"]).pack(pady=(30,10))
 
-        ctk.CTkLabel(self.sidebar, text="KANTIN DIGITAL",
-                     font=("Montserrat", 22, "bold"),
-                     text_color=COLOR_PRIMARY).pack(pady=(30, 20))
-
-        self.btn_order = ctk.CTkButton(self.sidebar, text="🛒 Pemesanan",
-                                       command=self.show_pemesanan,
-                                       width=200, fg_color="transparent", anchor="w")
+        # always show Pemesanan for all users
+        self.btn_order = ctk.CTkButton(self.sidebar, text="🛒 Pemesanan", command=lambda: self.show_pemesanan("Semua"), width=200, fg_color="transparent", anchor="w")
         self.btn_order.pack(pady=6)
 
+        # If admin show admin pages, guest will see category buttons below
         if self.is_admin:
-            self.btn_kelola = ctk.CTkButton(self.sidebar, text="📝 Kelola Menu",
-                                            command=self.show_kelola,
-                                            width=200, fg_color="transparent", anchor="w")
+            self.btn_kelola = ctk.CTkButton(self.sidebar, text="📝 Kelola Menu", command=self.show_kelola, width=200, fg_color="transparent", anchor="w")
             self.btn_kelola.pack(pady=6)
-
-            self.btn_riwayat = ctk.CTkButton(self.sidebar, text="📜 Riwayat",
-                                             command=self.show_riwayat,
-                                             width=200, fg_color="transparent", anchor="w")
+            self.btn_riwayat = ctk.CTkButton(self.sidebar, text="📜 Riwayat", command=self.show_riwayat, width=200, fg_color="transparent", anchor="w")
             self.btn_riwayat.pack(pady=6)
-
-            self.btn_laporan = ctk.CTkButton(self.sidebar, text="📊 Laporan",
-                                             command=self.show_laporan,
-                                             width=200, fg_color="transparent", anchor="w")
+            self.btn_laporan = ctk.CTkButton(self.sidebar, text="📊 Laporan", command=self.show_laporan, width=200, fg_color="transparent", anchor="w")
             self.btn_laporan.pack(pady=6)
+        else:
+            # for guest / tamu: show category quick buttons
+            self.btn_makanan = ctk.CTkButton(self.sidebar, text="🍽️ Makanan", command=lambda: self.show_pemesanan("Makanan"), width=200, fg_color="transparent", anchor="w")
+            self.btn_makanan.pack(pady=6)
+            self.btn_minuman = ctk.CTkButton(self.sidebar, text="🥤 Minuman", command=lambda: self.show_pemesanan("Minuman"), width=200, fg_color="transparent", anchor="w")
+            self.btn_minuman.pack(pady=6)
+            self.btn_snack = ctk.CTkButton(self.sidebar, text="🍟 Snack", command=lambda: self.show_pemesanan("Snack"), width=200, fg_color="transparent", anchor="w")
+            self.btn_snack.pack(pady=6)
 
-        self.dark_var = tk.BooleanVar(value=True)
-        ctk.CTkSwitch(self.sidebar, text="Dark Mode",
-                      variable=self.dark_var,
-                      command=self.toggle_theme).pack(side="bottom", pady=30)
+        # theme switch
+        self.dark_var = tk.BooleanVar(value=(ctk.get_appearance_mode() == "Dark"))
+        self.switch = ctk.CTkSwitch(self.sidebar, text="Dark Mode", command=self.toggle_theme, variable=self.dark_var)
+        self.switch.pack(side="bottom", pady=30)
 
-        ctk.CTkButton(self.sidebar, text="Log Out", fg_color=COLOR_DANGER,
-                      command=self.logout, width=160).pack(side="bottom", pady=10)
+        ctk.CTkButton(self.sidebar, text="Log Out", command=self.logout, fg_color=self.COLORS["DANGER"], width=160).pack(side="bottom", pady=10)
 
-        # main content area
-        self.main_area = ctk.CTkFrame(self, fg_color="transparent")
+        # main area (made non-transparent to avoid blank visual on some systems)
+        self.main_area = ctk.CTkFrame(self, fg_color=self.COLORS["BG_MAIN"])
         self.main_area.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
 
-        # Instances
+        # container frames for pages
         self.frame_pemesanan = None
         self.frame_kelola = None
         self.frame_riwayat = None
         self.frame_laporan = None
 
-        self.show_pemesanan()
+        # default page: show all menu
+        self.show_pemesanan("Semua")
+
+    def _apply_palette_initial(self):
+        mode = ctk.get_appearance_mode() or "Dark"
+        self.COLORS = colors_for_mode(mode)
+        try:
+            self.configure(fg_color=self.COLORS["BG_MAIN"])
+        except Exception:
+            pass
+
+    def _apply_palette_runtime(self):
+        """Apply current palette to main components (best-effort)."""
+        mode = ctk.get_appearance_mode() or "Dark"
+        self.COLORS = colors_for_mode(mode)
+        try:
+            self.configure(fg_color=self.COLORS["BG_MAIN"])
+        except Exception:
+            pass
+        # update sidebar and main frames if exist
+        try:
+            if hasattr(self, "sidebar") and self.sidebar:
+                self.sidebar.configure(fg_color=self.COLORS["SIDEBAR"])
+            if hasattr(self, "main_area") and self.main_area:
+                self.main_area.configure(fg_color=self.COLORS["BG_MAIN"])
+            # update buttons/labels that use colors explicitly if present
+            for btn in getattr(self, "sidebar").winfo_children():
+                # if button uses fg_color stored earlier, let it remain; colors for new widgets will follow palette
+                pass
+        except Exception:
+            pass
+        # if there's a current page, refresh it so colors are used when widgets are recreated
+        current = None
+        if self.frame_pemesanan:
+            current = "pemesanan"
+        elif self.frame_kelola:
+            current = "kelola"
+        elif self.frame_riwayat:
+            current = "riwayat"
+        elif self.frame_laporan:
+            current = "laporan"
+        # re-show current to apply palette for page-specific widgets
+        if current == "pemesanan":
+            self.show_pemesanan("Semua")
+        elif current == "kelola":
+            self.show_kelola()
+        elif current == "riwayat":
+            self.show_riwayat()
+        elif current == "laporan":
+            self.show_laporan()
 
-    # ====================================================
-    # CLEAR MAIN PAGE
-    # ====================================================
-    def clear_main(self):
-        for w in self.main_area.winfo_children():
-            w.destroy()
-
-    # ====================================================
-    # PEMESANAN PAGE
-    # ====================================================
-    def show_pemesanan(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD, corner_radius=12)
-        frame.pack(fill="both", expand=True)
-
-        ctk.CTkLabel(frame, text="Pemesanan", font=("Arial", 18, "bold")).pack(anchor="w", padx=20, pady=10)
-
-        ctrl = ctk.CTkFrame(frame, fg_color="transparent")
-        ctrl.pack(fill="x", padx=20)
-
-        search_entry = ctk.CTkEntry(ctrl, placeholder_text="🔍 Cari menu...", width=300)
-        search_entry.grid(row=0, column=0, padx=10)
-
-        kat_list = ["Semua"] + list({m.kategori for m in self.manager.get_semua_menu()})
-        kat_filter = ctk.CTkComboBox(ctrl, values=kat_list, width=180)
-        kat_filter.grid(row=0, column=1, padx=10)
-        kat_filter.set("Semua")
-
-        # ====================================================
-        # CART PANEL
-        # ====================================================
-        cart_frame = ctk.CTkFrame(frame, fg_color=COLOR_CARD)
-        cart_frame.pack(side="right", fill="y", padx=20, pady=20)
-
-        ctk.CTkLabel(cart_frame, text="Keranjang Belanja",
-                     font=("Arial", 15, "bold")).pack(pady=8)
-
-        self.listbox_cart = tk.Listbox(cart_frame, bg=COLOR_SIDEBAR,
-                                       fg="white", width=30, font=("Arial", 12))
-        self.listbox_cart.pack(pady=6)
-
-        self.label_cart_total = ctk.CTkLabel(cart_frame, text="Total: Rp 0",
-                                             font=("Arial", 14, "bold"), text_color=COLOR_SUCCESS)
-        self.label_cart_total.pack(pady=10)
-
-        ctk.CTkButton(cart_frame, text="Bersihkan Keranjang",
-                      fg_color=COLOR_WARNING,
-                      command=self.clear_cart).pack(fill="x", pady=4)
-
-        ctk.CTkButton(cart_frame, text="Checkout",
-                      fg_color=COLOR_PRIMARY,
-                      command=self.checkout).pack(fill="x", pady=4)
-
-        # ====================================================
-        # MENU LIST
-        # ====================================================
-        canvas = tk.Canvas(frame, bg=COLOR_CARD, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-        scroll_frame = ttk.Frame(canvas)
-
-        scroll_frame.bind("<Configure>",
-                          lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-        scrollbar.pack(side="left", fill="y")
-
-        # Render function
-        def populate_cards(kat="Semua", keyword=""):
-            for w in scroll_frame.winfo_children():
-                w.destroy()
-
-            menus = self.manager.get_semua_menu()
-
-            if kat != "Semua":
-                menus = [m for m in menus if m.kategori == kat]
-
-            if keyword:
-                menus = [m for m in menus if keyword.lower() in m.nama.lower()]
-
-            for m in menus:
-                card = ctk.CTkFrame(scroll_frame, fg_color="#111827", corner_radius=10)
-                card.pack(fill="x", pady=6, padx=10)
-
-                ctk.CTkLabel(card, text=m.nama, font=("Arial", 14, "bold")).grid(
-                    row=0, column=0, sticky="w", padx=10, pady=(8, 0))
-
-                ctk.CTkLabel(card, text=f"Rp {m.harga:,}".replace(",", "."),
-                             font=("Arial", 12)).grid(row=1, column=0, sticky="w", padx=10)
-
-                ctk.CTkLabel(card, text=f"Stok: {m.stok}",
-                             font=("Arial", 11)).grid(row=1, column=1, sticky="e", padx=10)
-
-                qty_spin = tk.Spinbox(card, from_=1, to=max(1, m.stok), width=5)
-                qty_spin.grid(row=0, column=1, padx=10)
-
-                def add_to_cart(menu=m, spin=qty_spin):
-                    try:
-                        qty = int(spin.get())
-                    except:
-                        qty = 1
-
-                    if qty > menu.stok:
-                        messagebox.showerror("Stok Kurang",
-                                             f"Stok {menu.nama} tidak cukup.")
-                        return
-
-                    self.cart.add(menu, qty)
-                    self.refresh_cart()
-
-                ctk.CTkButton(card, text="Tambah",
-                              command=add_to_cart,
-                              fg_color=COLOR_PRIMARY, width=80).grid(
-                                  row=0, column=2, rowspan=2, padx=10, pady=10)
-
-        populate_cards()
-
-        search_entry.bind("<KeyRelease>",
-                          lambda e: populate_cards(kat_filter.get(), search_entry.get()))
-        kat_filter.configure(
-            command=lambda v: populate_cards(v, search_entry.get())
-        )
-
-        self.frame_pemesanan = frame
-
-    # ====================================================
-    # CART FUNCTIONS
-    # ====================================================
-    def refresh_cart(self):
-        self.listbox_cart.delete(0, "end")
-
-        for item in self.cart.items:
-            self.listbox_cart.insert(
-                "end",
-                f"{item.menu_item.nama} x{item.qty} = Rp {item.subtotal:,}".replace(",", ".")
-            )
-
-        self.label_cart_total.configure(
-            text=f"Total: Rp {self.cart.total:,}".replace(",", ".")
-        )
-
-    def clear_cart(self):
-        if messagebox.askyesno("Konfirmasi", "Kosongkan keranjang?"):
-            self.cart.clear()
-            self.refresh_cart()
-
-    def checkout(self):
-        if not self.cart.items:
-            messagebox.showwarning("Kosong", "Keranjang masih kosong.")
-            return
-
-        buyer = simpledialog.askstring("Nama Pembeli", "Masukkan nama pembeli:")
-        if not buyer:
-            return
-
-        hasil = self.manager.proses_checkout(buyer, self.cart)
-
-        if isinstance(hasil, str):
-            messagebox.showerror("Gagal", hasil)
-            return
-
-        order = hasil
-        struk = self.manager.generate_struk(order)
-
-        messagebox.showinfo("Sukses", f"Order berhasil!\n\n{struk}")
-
-        self.cart.clear()
-        self.refresh_cart()
-        self.show_pemesanan()
-
-    # ====================================================
-    # PAGE: KELOLA MENU
-    # ====================================================
-    def show_kelola(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD)
-        frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-        ctk.CTkLabel(frame, text="Kelola Menu",
-                     font=("Arial", 18, "bold")).pack(anchor="w", padx=20, pady=10)
-
-        tree = ttk.Treeview(frame, columns=("harga", "kategori", "stok"), show="headings")
-        tree.heading("harga", text="Harga")
-        tree.heading("kategori", text="Kategori")
-        tree.heading("stok", text="Stok")
-        tree.pack(fill="both", expand=True, padx=20, pady=10)
-
-        for m in self.manager.get_semua_menu():
-            tree.insert("", "end", iid=m.nama,
-                        values=(m.harga, m.kategori, m.stok))
-
-        def tambah():
-            nama = simpledialog.askstring("Nama", "Masukkan nama menu:")
-            harga = simpledialog.askinteger("Harga", "Masukkan harga:")
-            kategori = simpledialog.askstring("Kategori", "Masukkan kategori:")
-            stok = simpledialog.askinteger("Stok", "Masukkan stok awal:")
-            if nama and harga and kategori and stok is not None:
-                self.manager.tambah_menu(nama, harga, kategori, stok)
-                self.manager.export_ke_csv()
-                self.show_kelola()
-
-        def edit():
-            selected = tree.focus()
-            if not selected:
-                return
-            m = next((x for x in self.manager.daftar_menu if x.nama == selected), None)
-            if not m:
-                return
-
-            nama_baru = simpledialog.askstring("Nama Baru", "Nama Baru:", initialvalue=m.nama)
-            harga_baru = simpledialog.askinteger("Harga Baru", "Harga Baru:", initialvalue=m.harga)
-            kategori_baru = simpledialog.askstring("Kategori Baru", "Kategori Baru:", initialvalue=m.kategori)
-            stok_baru = simpledialog.askinteger("Stok Baru", "Stok Baru:", initialvalue=m.stok)
-
-            if nama_baru and harga_baru and kategori_baru and stok_baru is not None:
-                self.manager.edit_menu(m.nama, nama_baru, harga_baru, kategori_baru, stok_baru)
-                self.manager.export_ke_csv()
-                self.show_kelola()
-
-        def hapus():
-            selected = tree.focus()
-            if selected and messagebox.askyesno("Hapus", "Hapus menu ini?"):
-                self.manager.hapus_menu(selected)
-                self.manager.export_ke_csv()
-                self.show_kelola()
-
-        btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        btn_frame.pack(pady=10)
-
-        ctk.CTkButton(btn_frame, text="Tambah Menu", fg_color=COLOR_PRIMARY,
-                      command=tambah).grid(row=0, column=0, padx=10)
-        ctk.CTkButton(btn_frame, text="Edit", fg_color=COLOR_WARNING,
-                      command=edit).grid(row=0, column=1, padx=10)
-        ctk.CTkButton(btn_frame, text="Hapus", fg_color=COLOR_DANGER,
-                      command=hapus).grid(row=0, column=2, padx=10)
-
-        self.frame_kelola = frame
-
-    # ====================================================
-    # PAGE: RIWAYAT ORDER
-    # ====================================================
-    def show_riwayat(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD)
-        frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-        ctk.CTkLabel(frame, text="Riwayat Transaksi",
-                     font=("Arial", 18, "bold")).pack(anchor="w", padx=20, pady=10)
-
-        tree = ttk.Treeview(frame, columns=("waktu", "nama", "total"), show="headings")
-        tree.heading("waktu", text="Waktu")
-        tree.heading("nama", text="Pembeli")
-        tree.heading("total", text="Total")
-        tree.pack(fill="both", expand=True, padx=20, pady=20)
-
-        for o in self.manager.get_orders_history():
-            tree.insert("", "end",
-                        values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                                o.buyer_name, f"Rp {o.total:,}".replace(",", ".")))
-
-        self.frame_riwayat = frame
-
-    # ====================================================
-    # PAGE: LAPORAN
-    # ====================================================
-    def show_laporan(self):
-        self.clear_main()
-        frame = ctk.CTkFrame(self.main_area, fg_color=COLOR_CARD)
-        frame.pack(fill="both", expand=True)
-
-        ctk.CTkLabel(frame, text="Laporan Penjualan",
-                     font=("Arial", 20, "bold")).pack(pady=20)
-
-        ringkas = self.manager.ringkasan_laporan()
-
-        info = ctk.CTkFrame(frame, fg_color="#1E293B")
-        info.pack(fill="x", padx=40, pady=10)
-
-        ctk.CTkLabel(info, text=f"Total Menu: {ringkas['total_menu']}",
-                     font=("Arial",14)).pack(pady=5)
-        ctk.CTkLabel(info, text=f"Total Transaksi: {ringkas['total_orders']}",
-                     font=("Arial",14)).pack(pady=5)
-        ctk.CTkLabel(info, text=f"Total Pendapatan: Rp {ringkas['total_revenue']:,}".replace(",", "."),
-                     font=("Arial",14)).pack(pady=5)
-
-        # Grafik kategori menu
-        fig = Figure(figsize=(5, 3), dpi=100)
-        ax = fig.add_subplot(111)
-
-        kategori = list(ringkas["menu_per_kategori"].keys())
-        jumlah = list(ringkas["menu_per_kategori"].values())
-
-        ax.bar(kategori, jumlah)
-        ax.set_title("Jumlah Menu per Kategori")
-
-        canvas = FigureCanvasTkAgg(fig, master=frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(pady=20)
-
-        self.frame_laporan = frame
-
-    # ====================================================
-    # THEME + LOGOUT
-    # ====================================================
     def toggle_theme(self):
+        # toggle appearance mode in customtkinter and re-apply palette
         if self.dark_var.get():
             ctk.set_appearance_mode("Dark")
         else:
             ctk.set_appearance_mode("Light")
+        self._apply_palette_runtime()
 
+    def clear_main(self):
+        for widget in self.main_area.winfo_children():
+            widget.destroy()
+
+    # ---------------- Pemesanan Page ----------------
+    def show_pemesanan(self, filter_kategori="Semua"):
+        from customtkinter import CTkScrollableFrame
+
+        self.clear_main()
+        # Use a card container with wider space for menu items
+        container = ctk.CTkFrame(self.main_area, fg_color=self.COLORS["CARD"], corner_radius=12)
+        container.pack(fill="both", expand=True)
+        header = ctk.CTkLabel(container, text="Pemesanan", font=("Arial", 18, "bold"), text_color=self.COLORS["TEXT"])
+        header.pack(anchor="w", padx=20, pady=10)
+
+        # Top controls: search + kategori summary + meja (display) (meja input will be on checkout)
+        ctrl = ctk.CTkFrame(container, fg_color="transparent")
+        ctrl.pack(fill="x", padx=20, pady=(0,10))
+        search_entry = ctk.CTkEntry(ctrl, placeholder_text="🔍 Cari menu...", width=420)
+        search_entry.grid(row=0, column=0, padx=8, pady=6, sticky="w")
+        combo = ctk.CTkComboBox(ctrl, values=["Semua", "Makanan", "Minuman", "Snack"], width=180)
+        combo.grid(row=0, column=1, padx=8)
+        combo.set(filter_kategori if filter_kategori else "Semua")
+
+        # Right: cart panel
+        cart_panel = ctk.CTkFrame(container, fg_color=self.COLORS["CARD"], width=280)
+        cart_panel.pack(side="right", fill="y", padx=20, pady=10)
+        ctk.CTkLabel(cart_panel, text="Keranjang", font=("Arial", 14, "bold"), text_color=self.COLORS["TEXT"]).pack(padx=10, pady=(10,6))
+        listbox = tk.Listbox(cart_panel, height=12, bg=self.COLORS["SIDEBAR"], fg=self.COLORS["TEXT"], font=("Arial", 12))
+        listbox.pack(padx=12, pady=6, fill="both")
+        total_label = ctk.CTkLabel(cart_panel, text="Total: Rp 0", font=("Arial", 14, "bold"), text_color=self.COLORS["SUCCESS"])
+        total_label.pack(padx=10, pady=(6,10))
+        btn_clear = ctk.CTkButton(cart_panel, text="Bersihkan Keranjang", fg_color=self.COLORS["WARNING"], command=lambda: self.clear_cart(listbox, total_label))
+        btn_clear.pack(padx=10, pady=6, fill="x")
+        btn_checkout = ctk.CTkButton(cart_panel, text="Checkout", fg_color=self.COLORS["PRIMARY"], command=lambda: self.checkout(listbox, total_label))
+        btn_checkout.pack(padx=10, pady=6, fill="x")
+
+        # Scrollable list for menu (wider, uses CTkScrollableFrame so visuals follow theme)
+        scroll_frame = CTkScrollableFrame(container, fg_color=container._fg_color)
+        scroll_frame.pack(side="left", fill="both", expand=True, padx=(20,0), pady=10)
+
+        # helper to refresh cart listbox
+        def refresh_cartbox():
+            listbox.delete(0, "end")
+            total = 0
+            for entry in self.keranjang:
+                nama = entry["menu"].nama
+                harga = entry["menu"].harga
+                qty = entry["qty"]
+                listbox.insert("end", f"{nama} x{qty} - Rp {harga*qty:,}".replace(",", "."))
+                total += harga * qty
+            total_label.configure(text=f"Total: Rp {total:,}".replace(",", "."))
+            self.current_cart_total = total
+
+        # populate cards with optional filter & search
+        def populate(kategori="Semua", keyword=""):
+            # clear
+            for w in scroll_frame.winfo_children():
+                w.destroy()
+
+            menus = self.manager.get_menu_by_kategori(kategori) if kategori and kategori != "Semua" else self.manager.get_semua_menu()
+            if keyword.strip():
+                kw = keyword.strip().lower()
+                menus = [m for m in menus if kw in m.nama.lower()]
+
+            # layout: vertical list of wide cards
+            for m in menus:
+                # choose a card background that's slightly different depending on mode
+                card_bg = "#0b1220" if ctk.get_appearance_mode() == "Dark" else "#ffffff"
+                card = ctk.CTkFrame(scroll_frame, fg_color=card_bg, corner_radius=10)
+                card.pack(fill="x", padx=12, pady=8)
+
+                # grid inside card: name/price/stok | qty | button
+                card.grid_columnconfigure(0, weight=3)
+                card.grid_columnconfigure(1, weight=1)
+                card.grid_columnconfigure(2, weight=1)
+
+                lbl_name = ctk.CTkLabel(card, text=m.nama, font=("Arial", 14, "bold"), text_color=self.COLORS["TEXT"])
+                lbl_name.grid(row=0, column=0, sticky="w", padx=10, pady=(8,0))
+                lbl_price = ctk.CTkLabel(card, text=f"Rp {m.harga:,}".replace(",", "."), font=("Arial", 12), text_color=self.COLORS["TEXT"])
+                lbl_price.grid(row=1, column=0, sticky="w", padx=10)
+                lbl_kat = ctk.CTkLabel(card, text=f"Kategori: {m.kategori}", font=("Arial", 11), text_color=self.COLORS["SUBTEXT"])
+                lbl_kat.grid(row=0, column=1, sticky="e", padx=6)
+                lbl_stok = ctk.CTkLabel(card, text=f"Stok: {m.stok}", font=("Arial", 11), text_color=self.COLORS["SUBTEXT"])
+                lbl_stok.grid(row=1, column=1, sticky="e", padx=6)
+
+                # qty spin & add button
+                qty_spin = tk.Spinbox(card, from_=1, to=max(1, m.stok), width=4)
+                qty_spin.grid(row=0, column=2, rowspan=2, padx=6, pady=8)
+                def add_local(menu_item=m, spin=qty_spin):
+                    try:
+                        q = int(spin.get())
+                    except:
+                        q = 1
+                    if q > menu_item.stok:
+                        messagebox.showerror("Stok Habis", f"Stok untuk {menu_item.nama} tidak mencukupi.")
+                        return
+                    # merge into cart
+                    found = False
+                    for e in self.keranjang:
+                        if e["menu"].nama == menu_item.nama:
+                            if e["qty"] + q > menu_item.stok:
+                                messagebox.showerror("Stok Habis", "Jumlah melebihi stok tersedia.")
+                                return
+                            e["qty"] += q
+                            found = True
+                            break
+                    if not found:
+                        self.keranjang.append({"menu": menu_item, "qty": q})
+                    refresh_cartbox()
+
+                btn_add = ctk.CTkButton(card, text="Tambah", width=100, command=add_local)
+                btn_add.grid(row=0, column=3, rowspan=2, padx=10, pady=8)
+
+        # initial populate using provided filter
+        populate(filter_kategori if filter_kategori else "Semua")
+
+        # bind search and combo
+        search_entry.bind("<KeyRelease>", lambda e: populate(combo.get(), search_entry.get()))
+        combo.configure(command=lambda v: populate(v, search_entry.get()))
+
+        # store references
+        self.frame_pemesanan = container
+
+    # cart helpers (used by multiple pages)
+    def refresh_cart_listbox(self, listbox_widget, label_total_widget):
+        # kept for backward compatibility (not used directly since we have local refresh)
+        listbox_widget.delete(0, "end")
+        total = 0
+        for entry in self.keranjang:
+            nama = entry["menu"].nama
+            harga = entry["menu"].harga
+            qty = entry["qty"]
+            listbox_widget.insert("end", f"{nama} x{qty} - Rp {harga*qty:,}".replace(",", ".")) 
+            total += harga * qty
+        label_total_widget.configure(text=f"Total: Rp {total:,}".replace(",", "."))
+        self.current_cart_total = total
+
+    def clear_cart(self, listbox_widget, label_total_widget):
+        if messagebox.askyesno("Konfirmasi", "Bersihkan seluruh keranjang?"):
+            self.keranjang.clear()
+            listbox_widget.delete(0, "end")
+            label_total_widget.configure(text="Total: Rp 0")
+
+    def format_struk(self, order: Order) -> str:
+        lines = []
+        lines.append("====== STRUK KANTIN ======")
+        lines.append(f"Tanggal : {order.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+        # meja may exist on order (backend sets it); if not, show dash
+        meja_val = getattr(order, "meja", "-")
+        lines.append(f"Nomor Meja : {meja_val}")
+        lines.append(f"Pembeli    : {order.buyer_name}")
+        lines.append("--------------------------")
+        for it in order.items:
+            lines.append(f"{it.menu_item.nama} x{it.qty} - Rp {it.subtotal:,}".replace(",", "."))
+        lines.append("--------------------------")
+        lines.append(f"Subtotal : Rp {order.subtotal:,}".replace(",", "."))
+        lines.append(f"Pajak 10%: Rp {order.pajak:,}".replace(",", "."))
+        lines.append(f"Total    : Rp {order.total:,}".replace(",", "."))
+        lines.append("==========================")
+        return "\n".join(lines)
+
+    def checkout(self, listbox_widget, label_total_widget):
+        if not self.keranjang:
+            messagebox.showwarning("Kosong", "Keranjang kosong.")
+            return
+        # ask for buyer name (optional). No meja input: backend akan generate meja
+        buyer = simpledialog.askstring("Nama Pembeli", "Masukkan nama pembeli (boleh kosong):")
+        # build OrderItems
+        items = []
+        for entry in self.keranjang:
+            menu_item = entry["menu"]
+            qty = entry["qty"]
+            if qty > menu_item.stok:
+                messagebox.showerror("Stok Tidak Cukup", f"Stok {menu_item.nama} tidak mencukupi.")
+                return
+            items.append(OrderItem(menu_item, qty))
+
+        buyer_name = buyer.strip() if buyer and buyer.strip() else "Tamu"
+
+        order = Order(buyer_name, items)
+        # set meja attribute if backend does not (frontend can set placeholder), but backend is expected to generate meja
+        if not hasattr(order, "meja"):
+            # fallback meja: use timestamp seconds to make a small unique number
+            order.meja = datetime.now().strftime("%H%M%S")
+        success = self.manager.simpan_order(order)
+        if success:
+            # show struk to guest and admin will also see it in Riwayat
+            struk = self.format_struk(order)
+            messagebox.showinfo("Struk Pembelian", struk)
+            # clear cart visuals
+            self.keranjang.clear()
+            listbox_widget.delete(0, "end")
+            label_total_widget.configure(text="Total: Rp 0")
+            # refresh pemesanan (stok updated)
+            self.show_pemesanan("Semua")
+        else:
+            messagebox.showerror("Gagal", "Order gagal. Periksa stok item atau sistem.")
+
+    # ---------------- Kelola Menu Page (Admin) ----------------
+    def show_kelola(self):
+        if not self.is_admin:
+            return
+        self.clear_main()
+        frame = ctk.CTkFrame(self.main_area, fg_color=self.COLORS["CARD"], corner_radius=12)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        header = ctk.CTkLabel(frame, text="Kelola Menu", font=("Arial", 18, "bold"), text_color=self.COLORS["TEXT"])
+        header.pack(anchor="w", padx=20, pady=10)
+
+        # form top
+        form = ctk.CTkFrame(frame, fg_color="transparent")
+        form.pack(fill="x", padx=20)
+        entry_nama = ctk.CTkEntry(form, placeholder_text="Nama Item", width=300)
+        entry_nama.grid(row=0, column=0, padx=6, pady=6)
+        entry_harga = ctk.CTkEntry(form, placeholder_text="Harga (Rp)", width=150)
+        entry_harga.grid(row=0, column=1, padx=6)
+        entry_stok = ctk.CTkEntry(form, placeholder_text="Stok", width=100)
+        entry_stok.grid(row=0, column=2, padx=6)
+        combo_kat = ctk.CTkComboBox(form, values=["Makanan", "Minuman", "Snack"], width=150)
+        combo_kat.grid(row=0, column=3, padx=6)
+        combo_kat.set("Makanan")
+
+        btn_add = ctk.CTkButton(form, text="+ Tambah", fg_color=self.COLORS["SUCCESS"], command=lambda: self.admin_add_menu(entry_nama, entry_harga, combo_kat, entry_stok))
+        btn_add.grid(row=0, column=4, padx=6)
+        btn_update = ctk.CTkButton(form, text="Update", fg_color=self.COLORS["WARNING"], command=lambda: self.admin_update_menu(entry_nama, entry_harga, combo_kat, entry_stok))
+        btn_update.grid(row=0, column=5, padx=6)
+        btn_delete = ctk.CTkButton(form, text="Hapus", fg_color=self.COLORS["DANGER"], command=lambda: self.admin_delete_menu(entry_nama))
+        btn_delete.grid(row=0, column=6, padx=6)
+        btn_export = ctk.CTkButton(form, text="Export CSV", fg_color=self.COLORS["PRIMARY"], command=lambda: self.manager.export_ke_csv() and messagebox.showinfo("Export", "Data menu diexport ke CSV"))
+        btn_export.grid(row=0, column=7, padx=6)
+
+        # table
+        cols = ("nama", "harga", "kategori", "stok")
+        tree = ttk.Treeview(frame, columns=cols, show="headings")
+        for c in cols:
+            tree.heading(c, text=c.upper())
+        tree.pack(fill="both", expand=True, padx=20, pady=10)
+
+        def refresh_table():
+            for item in tree.get_children():
+                tree.delete(item)
+            for m in self.manager.get_semua_menu():
+                tree.insert("", "end", values=(m.nama, f"Rp {m.harga:,}".replace(",", "."), m.kategori, m.stok))
+        refresh_table()
+
+        def on_tree_select(event):
+            sel = tree.selection()
+            if not sel: return
+            vals = tree.item(sel[0])["values"]
+            entry_nama.delete(0, "end"); entry_nama.insert(0, vals[0])
+            harga_int = int(str(vals[1]).replace("Rp ", "").replace(".", ""))
+            entry_harga.delete(0, "end"); entry_harga.insert(0, str(harga_int))
+            combo_kat.set(vals[2])
+            entry_stok.delete(0, "end"); entry_stok.insert(0, vals[3])
+
+        tree.bind("<<TreeviewSelect>>", on_tree_select)
+
+        self._refresh_kelola_table = refresh_table  # store for external call
+        self.frame_kelola = frame
+
+    def admin_add_menu(self, entry_nama, entry_harga, combo_kat, entry_stok):
+        nama = entry_nama.get().strip()
+        try:
+            harga = int(entry_harga.get())
+        except:
+            messagebox.showerror("Error", "Harga harus angka")
+            return
+        stok = 0
+        try:
+            stok = int(entry_stok.get())
+        except:
+            stok = 0
+        if not nama:
+            messagebox.showwarning("Diperlukan", "Nama menu harus diisi")
+            return
+        self.manager.tambah_menu(nama, harga, combo_kat.get(), stok)
+        self.manager.export_ke_csv()
+        messagebox.showinfo("Sukses", "Menu ditambahkan")
+        # refresh views
+        self.show_kelola()
+
+    def admin_update_menu(self, entry_nama, entry_harga, combo_kat, entry_stok):
+        selected_name = None
+        try:
+            tree = self.frame_kelola.winfo_children()[-1]
+            sel = tree.selection()
+            if sel:
+                selected_name = tree.item(sel[0])["values"][0]
+        except Exception:
+            pass
+        if not selected_name:
+            messagebox.showwarning("Pilih Item", "Pilih menu yang akan diupdate dari tabel")
+            return
+        nama_baru = entry_nama.get().strip()
+        try:
+            harga_baru = int(entry_harga.get())
+        except:
+            messagebox.showerror("Error", "Harga harus angka")
+            return
+        try:
+            stok_baru = int(entry_stok.get())
+        except:
+            stok_baru = 0
+        kat = combo_kat.get()
+        if self.manager.edit_menu(selected_name, nama_baru, harga_baru, kat, stok_baru):
+            self.manager.export_ke_csv()
+            messagebox.showinfo("Sukses", "Menu diperbarui")
+            self.show_kelola()
+        else:
+            messagebox.showerror("Gagal", "Tidak dapat menemukan menu")
+
+    def admin_delete_menu(self, entry_nama):
+        nama = entry_nama.get().strip()
+        if not nama:
+            messagebox.showwarning("Diperlukan", "Masukkan nama menu yang ingin dihapus")
+            return
+        if messagebox.askyesno("Konfirmasi", f"Hapus menu {nama}?"):
+            self.manager.hapus_menu(nama)
+            self.manager.export_ke_csv()
+            messagebox.showinfo("Sukses", "Menu dihapus")
+            self.show_kelola()
+
+    # ---------------- Riwayat Page ----------------
+    def show_riwayat(self):
+        if not self.is_admin:
+            return
+        self.clear_main()
+        frame = ctk.CTkFrame(self.main_area, fg_color=self.COLORS["CARD"], corner_radius=12)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        header = ctk.CTkLabel(frame, text="Riwayat Pesanan", font=("Arial", 18, "bold"), text_color=self.COLORS["TEXT"])
+        header.pack(anchor="w", padx=20, pady=10)
+
+        cols = ("waktu", "meja", "pembeli", "items", "total", "status")
+        tree = ttk.Treeview(frame, columns=cols, show="headings")
+        for c in cols:
+            tree.heading(c, text=c.upper())
+        tree.pack(fill="both", expand=True, padx=20, pady=10)
+
+        # insert orders and use timestamp as iid (unique enough)
+        for o in self.manager.get_orders_history():
+            items_text = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
+            iid = o.timestamp.strftime("%Y%m%d%H%M%S")
+            meja_display = getattr(o, "meja", "-")
+            tree.insert("", "end", iid=iid, values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"), meja_display, o.buyer_name, items_text, f"Rp {o.total:,}".replace(",", "."), o.status))
+
+        def on_double_click(event):
+            sel = tree.selection()
+            if not sel:
+                return
+            iid = sel[0]
+            # find order by matching timestamp string in iid
+            try:
+                ts = datetime.strptime(iid, "%Y%m%d%H%M%S")
+            except Exception:
+                # fallback: try reading value
+                vals = tree.item(iid)["values"]
+                ts_str = vals[0]
+                try:
+                    ts = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    ts = None
+            target = None
+            for ord_obj in self.manager.get_orders_history():
+                if ts and ord_obj.timestamp.strftime("%Y%m%d%H%M%S") == iid:
+                    target = ord_obj
+                    break
+            if not target:
+                # fallback: use first selected row values to find by buyer+total+timestamp string
+                vals = tree.item(iid)["values"]
+                ts_val = vals[0]
+                for ord_obj in self.manager.get_orders_history():
+                    if ord_obj.timestamp.strftime("%Y-%m-%d %H:%M:%S") == ts_val:
+                        target = ord_obj
+                        break
+            if target:
+                struk = self.format_struk(target)
+                # show in a scrollable popup
+                top = tk.Toplevel(self)
+                top.title(f"Struk - Meja {getattr(target, 'meja', '-')}")
+                txt = tk.Text(top, width=60, height=20)
+                txt.insert("1.0", struk)
+                txt.configure(state="disabled")
+                txt.pack(padx=10, pady=10)
+                btn_close = ctk.CTkButton(top, text="Tutup", command=top.destroy)
+                btn_close.pack(pady=(0,10))
+        tree.bind("<Double-1>", on_double_click)
+
+        self.frame_riwayat = frame
+
+    # ---------------- Laporan Page ----------------
+    def show_laporan(self):
+        if not self.is_admin:
+            return
+        self.clear_main()
+        frame = ctk.CTkFrame(self.main_area, fg_color=self.COLORS["CARD"], corner_radius=12)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        header = ctk.CTkLabel(frame, text="Laporan Penjualan", font=("Arial", 18, "bold"), text_color=self.COLORS["TEXT"])
+        header.pack(anchor="w", padx=20, pady=10)
+
+        stats = self.manager.hitung_total_penjualan()
+        ctk.CTkLabel(frame, text=f"Total Pesanan: {stats['total_orders']}", font=("Arial", 14), text_color=self.COLORS["TEXT"]).pack(anchor="w", padx=20, pady=(10,0))
+        ctk.CTkLabel(frame, text=f"Total Pendapatan (termasuk pajak): Rp {stats['total_revenue']:,}".replace(",", "."), font=("Arial", 14), text_color=self.COLORS["TEXT"]).pack(anchor="w", padx=20, pady=(6,0))
+
+        # grafik sederhana kategori
+        data = self.manager.get_data_grafik()
+        fig = Figure(figsize=(5,3), dpi=100)
+        ax = fig.add_subplot(111)
+        keys = list(data.keys())
+        vals = list(data.values())
+        ax.bar(keys, vals)
+        ax.set_title("Jumlah Item per Kategori")
+        FigureCanvasTkAgg(fig, master=frame).get_tk_widget().pack(padx=10, pady=10)
+
+        self.frame_laporan = frame
+
+    # ---------------- misc ----------------
     def logout(self):
-        self.destroy()
-        LoginWindow().mainloop()
+        if messagebox.askyesno("Logout", "Keluar dari sistem?"):
+            self.destroy()
+            buka_login_window()
 
+# --------------- App launch helpers ---------------
+def buka_login_window():
+    app = LoginWindow()
+    app.mainloop()
 
-# ====================================================
-# RUN APP
-# ====================================================
+def buka_aplikasi_utama(is_admin=True):
+    app = AplikasiKantin(is_admin=is_admin)
+    app.mainloop()
+
 if __name__ == "__main__":
-    LoginWindow().mainloop()
+    buka_login_window()
