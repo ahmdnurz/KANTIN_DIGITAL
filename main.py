@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
-
+# KONSTANTA
 # Colors
 COLOR_BG_MAIN = "#0F172A"
 COLOR_SIDEBAR = "#1E293B"
@@ -17,8 +17,9 @@ COLOR_PRIMARY = "#3B82F6"
 COLOR_SUCCESS = "#10B981"
 COLOR_WARNING = "#F59E0B"
 COLOR_DANGER = "#EF4444"
-
+#VARIABEL LOGIN(MENYIMPANDATA LOGIN)
 # --------------- Login Window ---------------
+#OPP(LOGIN WINDOW)
 class LoginWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -104,7 +105,7 @@ class LoginWindow(ctk.CTk):
     def masuk_tamu(self):
         self.destroy()
         buka_aplikasi_utama(is_admin=False)
-
+#VARIABEL CLASS(MENYIMOAN DATA APLIKASI)
 # --------------- Main App ---------------
 class AplikasiKantin(ctk.CTk):
     def __init__(self, is_admin=True):
@@ -114,7 +115,7 @@ class AplikasiKantin(ctk.CTk):
         self.title(f"Dashboard {role} - Kantin Digital")
         self.geometry("1200x750")
         self.configure(fg_color=COLOR_BG_MAIN)
-
+#ARRAY
         self.manager = KantinManager()
         self.keranjang = []  # list of dict {menu:MenuItem, qty:int}
         self.buyer_name = ""
@@ -155,7 +156,7 @@ class AplikasiKantin(ctk.CTk):
 
         # default page
         self.show_pemesanan()
-
+#PERCABANGAN
     def toggle_theme(self):
         if self.dark_var.get():
             ctk.set_appearance_mode("Dark")
@@ -216,7 +217,8 @@ class AplikasiKantin(ctk.CTk):
 
         canvas.pack(side="left", fill="both", expand=True, padx=(20,0), pady=10)
         scrollbar.pack(side="left", fill="y")
-
+#PERULANGAN(MENAMPILKAN MENU ATAU MENGISI KERANJANG)
+#FUNGSI(DEF)
         # populate cards function
         def populate_cards(filter_kat="Semua", keyword=""):
             for w in scrollable_frame.winfo_children():
