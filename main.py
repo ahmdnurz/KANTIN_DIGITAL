@@ -461,80 +461,9 @@ class AplikasiKantin(ctk.CTk):
             items = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
             tree.insert("", "end", values=(o.timestamp.strftime("%Y-%m-%d %H:%M:%S"), o.buyer_name, items, f"Rp {o.total:,}".replace(",", ".")))
 
-<<<<<<< HEAD
-        tree.pack(fill="both", expand=True, padx=20, pady=(0, 10))
-
-        def refresh():
-            for i in tree.get_children():
-                tree.delete(i)
-
-            for o in self.manager.get_orders_history():
-                items_text = ", ".join([f"{it.menu_item.nama}x{it.qty}" for it in o.items])
-                tree.insert(
-                    "",
-                    "end",
-                    values=(
-                        o.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                        o.buyer_name,
-                        items_text,
-                        f"Rp {o.total:,}".replace(",", "."),
-                        o.status
-                    )
-                )
-
-        refresh()
-
-        # ==============================
-        # TOMBOL HAPUS RIWAYAT
-        # ==============================
-        def hapus_riwayat():
-            from tkinter import messagebox
-
-            # Ambil item terpilih
-            selected = tree.focus()
-            if not selected:
-                messagebox.showwarning("Peringatan", "Pilih salah satu riwayat yang ingin dihapus!")
-                return
-
-            values = tree.item(selected, "values")
-            waktu = values[0]
-
-            confirm = messagebox.askyesno(
-                "Konfirmasi",
-                f"Yakin ingin menghapus riwayat pada waktu:\n{waktu}?"
-            )
-            if not confirm:
-                return
-
-            history = self.manager.orders_history
-
-            for o in history[:]:
-                if o.timestamp.strftime("%Y-%m-%d %H:%M:%S") == waktu:
-                    history.remove(o)
-                    break
-
-            refresh()
-
-        # === TOMBOL DITAMBAHKAN DI SINI ===
-        btn_hapus = ctk.CTkButton(
-            frame,
-            text="Hapus Riwayat Terpilih",
-            fg_color="red",
-            hover_color="#A00000",
-            text_color="white",
-            command=hapus_riwayat
-        )
-        btn_hapus.pack(anchor="e", padx=20, pady=10)
-
-        self.frame_riwayat = frame
-
-
-    # ---------------- Laporan Page ----------------
-=======
     # --------------------------
     # Laporan
     # --------------------------
->>>>>>> 42887e1c349886945ba45dc45a147bacde807c28
     def show_laporan(self):
         if not self.is_admin:
             return
