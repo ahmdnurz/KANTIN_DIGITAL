@@ -8,9 +8,11 @@ FILE_ORDERS = "orders_history.csv"
 
 # -------------------------
 # OOP: MenuItem (encapsulation)
-# -------------------------
+# ------------------------
+#OOP CLASS = cara membuat program dengan class dan object
 class MenuItem:
     #VARIABEL SELF tempat menyimpan nilai yang dapat berubah.(16-19)
+    #FUNGSI INIT Blok kode yang bisa dipanggil berulang-ulang.(15)
     def __init__(self, nama: str, harga: int, kategori: str, stok: int =  0):
         # private attributes
         #TIPE DATA STING Jenis data yang digunakan.(17-20)
@@ -51,7 +53,7 @@ class MenuItem:
     @stok.setter
     def stok(self, v):
         self._stok = int(v)
-
+#FUNGSI REDUCE_STOK Blok kode yang bisa dipanggil berulang-ulang.(56-61)
     def reduce_stok(self, qty: int) -> bool:
         """Kurangi stok jika cukup, kembalikan True jika berhasil"""
         if qty <= self._stok:
@@ -83,7 +85,7 @@ class OrderItem:
 class Order:
     TAX_RATE = 0.10
     counter_meja = 1  # counter untuk nomor meja otomatis
-
+#FUNGSI INIT Blok kode yang bisa dipanggil berulang-ulang.(88-92)
     def __init__(self, buyer_name: str, items: List[OrderItem]):
         self.buyer_name = buyer_name
         self.items = items  # list of OrderItem
@@ -124,6 +126,7 @@ class Order:
 # KantinManager
 # -------------------------
 class KantinManager:
+    #FUNGSI INIT Blok kode yang bisa dipanggil berulang-ulang.(129)
     def __init__(self):
         self.daftar_menu: List[MenuItem] = []
         self.orders_history: List[Order] = []
@@ -132,6 +135,7 @@ class KantinManager:
 
     # --------------- data menu ---------------
     def load_data_awal(self):
+        #PERCABANGAN IF ELSE Percabangan menjalankan kode tertentu berdasarkan kondisi.(136-153)
         if os.path.exists(FILE_DB):
             try:
                 with open(FILE_DB, newline='', mode='r', encoding='utf-8') as f:
@@ -152,6 +156,7 @@ class KantinManager:
             self.export_ke_csv()
 
     def buat_data_dummy(self):
+        #ARRAY [] Kumpulan data dalam satu variabel(157)
         self.daftar_menu = []
         self.tambah_menu("Nasi Goreng Spesial", 18000, "Makanan", 10)
         self.tambah_menu("Ayam Geprek", 15000, "Makanan", 15)
@@ -214,17 +219,20 @@ class KantinManager:
 
     # --------------- orders & history ---------------
     def load_orders_history(self):
+        #ARRAY [] Kumpulan data dalam satu variabel(220)
         self.orders_history = []
         if os.path.exists(FILE_ORDERS):
             try:
                 with open(FILE_ORDERS, newline='', mode='r', encoding='utf-8') as f:
                     reader = csv.reader(f)
                     next(reader, None)
+                    #PERULANGAN FOR Mengulangi blok kode tertentu selama kondisi terpenuhi.(225-231)
                     for row in reader:
                         # new row format: timestamp, buyer, meja, subtotal, pajak, total, status, items_ser
                         if len(row) >= 8:
                             timestamp_s, buyer, meja_s, subtotal_s, pajak_s, total_s, status, items_ser = row[:8]
                             # parse items
+                            #ARRAY ITEMS [] Kumpulan data dalam satu variabel.(231)
                             items = []
                             for it in items_ser.split(";"):
                                 parts = it.split("|")
