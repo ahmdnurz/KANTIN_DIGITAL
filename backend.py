@@ -2,7 +2,7 @@ import csv
 import os
 from datetime import datetime
 from typing import List, Dict
-
+#KONSTANTA nilai yang tidak berubah selama program berjalan, biasanya huruf besar(6-7)
 FILE_DB = "data_kantin.csv"
 FILE_ORDERS = "orders_history.csv"
 
@@ -10,8 +10,10 @@ FILE_ORDERS = "orders_history.csv"
 # OOP: MenuItem (encapsulation)
 # -------------------------
 class MenuItem:
-    def __init__(self, nama: str, harga: int, kategori: str, stok: int = 0):
+    #VARIABEL SELF tempat menyimpan nilai yang dapat berubah.(16-19)
+    def __init__(self, nama: str, harga: int, kategori: str, stok: int =  0):
         # private attributes
+        #TIPE DATA STING Jenis data yang digunakan.(17-20)
         self._nama = str(nama)
         self._harga = int(harga)
         self._kategori = str(kategori)
